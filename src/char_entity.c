@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "char_entity.h"
+#include "assets.h"
 
 static const int FRAME_UPDATE_DELAY = 10;
 static const int MOVE_SPEED = 5;
@@ -27,7 +28,7 @@ Animation *create_animation(int width, int height, int frame_count, SDL_Texture 
     return a;
 }
 
-CharEntity *create_char_entity(int x, int y, SDL_Texture *images[]) {
+CharEntity *create_char_entity(int x, int y) {
     CharEntity* e = (CharEntity*)SDL_malloc(sizeof(CharEntity));
 
     if (!e) {
@@ -42,9 +43,9 @@ CharEntity *create_char_entity(int x, int y, SDL_Texture *images[]) {
     SDL_FRect v = { 0, 0, CHAR_HEIGHT * 2, CHAR_HEIGHT * 2 };
     e->dest_rect = v;
 
-    Animation* idle_animation = create_animation(CHAR_HEIGHT, CHAR_HEIGHT, 6, images[WITCH_IDLE_IDX], 1);
-    Animation* walk_animation = create_animation(CHAR_HEIGHT, CHAR_HEIGHT, 6, images[WITCH_WALK_IDX], 1);
-    Animation* quick_attack_animation = create_animation(CHAR_HEIGHT, CHAR_HEIGHT, 5, images[WITCH_Q_ATTACK_IDX], 0);
+    Animation* idle_animation = create_animation(CHAR_HEIGHT, CHAR_HEIGHT, 6, assets[WITCH_IDLE_IDX].texture, 1);
+    Animation* walk_animation = create_animation(CHAR_HEIGHT, CHAR_HEIGHT, 6, assets[WITCH_WALK_IDX].texture, 1);
+    Animation* quick_attack_animation = create_animation(CHAR_HEIGHT, CHAR_HEIGHT, 5, assets[WITCH_Q_ATTACK_IDX].texture, 0);
 
     e->walk_animation = walk_animation;
     e->idle_animation = idle_animation;
@@ -106,6 +107,14 @@ void update_character(CharEntity *c) {
     if (c->anim_delay_counter == FRAME_UPDATE_DELAY) {
         update_animation(c);
         c->anim_delay_counter = 1;
+    }
+}
+
+void render_character(CharEntity *c, SDL_Renderer *renderer) {
+    if (c->direction == -1) {
+        SDL_RenderTextureRotated(renderer, c->current_animation->texture, &c->current_animation->sprite_rect, &c->dest_rect, 0, NULL, SDL_FLIP_HORIZONTAL);
+    } else {
+        SDL_RenderTexture(renderer, c->current_animation->texture, &c->current_animation->sprite_rect, &c->dest_rect);
     }
 }
 
