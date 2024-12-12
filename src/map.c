@@ -32,7 +32,7 @@ TileMap create_map(SDL_Texture *images[], const int WINDOW_HEIGHT) {
     }
  
     for (int tile_idx = 0; tile_idx < NUM_TILES; tile_idx++) {
-        map_layout[tile_idx] = *create_tile(tile_idx * 64, WINDOW_HEIGHT - 64, images[TILESET_IDX], GROUND);
+        // map_layout[tile_idx] = *create_tile(tile_idx * 64, WINDOW_HEIGHT - 64, images[TILESET_IDX], GROUND);
     }
 
     tile_map.tiles = map_layout;
