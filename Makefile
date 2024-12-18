@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -g `pkg-config sdl3 sdl3-image --cflags`
-LDFLAGS = `pkg-config sdl3 sdl3-image --libs`
+CFLAGS = -Wall -g `pkg-config sdl3 sdl3-image sdl3-ttf --cflags`
+LDFLAGS = `pkg-config sdl3 sdl3-image sdl3-ttf --libs`
 
 SRC_DIR = src
 OBJ_DIR = obj
