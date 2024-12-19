@@ -1,7 +1,8 @@
 #include "npc.h"
 #include "constants.h"
+#include "conversations.h"
 
-NPC create_npc(int x, int y) {
+NPC create_npc(int x, int y, const int CONV_IDX) {
   NPC npc;
 
   Animation *idle_animation = create_animation(
@@ -11,6 +12,10 @@ NPC create_npc(int x, int y) {
 
   BaseEntity *b = init_base_entity(x, y, idle_animation, walk_animation);
   npc.base = *b;
+
+  if (CONV_IDX > -1) {
+    npc.dialogue = conversations[CONV_IDX];
+  }
 
   return npc;
 }

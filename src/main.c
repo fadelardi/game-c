@@ -1,6 +1,7 @@
 #define SDL_MAIN_USE_CALLBACKS 1
 #include "assets.h"
 #include "base_entity.h"
+#include "conversations.h"
 #include "char_entity.h"
 #include "npc.h"
 #include "ui.h"
@@ -32,18 +33,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
 
   init_assets(renderer);
   init_ui(renderer);
+  init_conversations();
   main_char = create_char_entity(0, 0);
-  NPC npc = create_npc(50, 50);
+  NPC npc = create_npc(50, 50, 0);
   add_npc(&npc_array, npc);
 
   return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-  if (event->type == SDL_EVENT_QUIT) {
-    return SDL_APP_SUCCESS;
-  } else if (event->type == SDL_EVENT_KEY_DOWN) {
-    switch (event->key.scancode) {
+void handle_gameplay_keys(SDL_Scancode code) {
+   switch (code) {
     case SDL_SCANCODE_A:
       move_entity(main_char->base, 0);
       break;
@@ -60,22 +59,55 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
       char_attack(main_char);
       break;
     case SDL_SCANCODE_E:
-      SDL_Log("in contact with npc %i", npc_contact_idx);
-      show_dialog = !show_dialog;
+      if (npc_contact_idx > -1) {
+        show_dialog = 1;
+      }
       break;
     default:
       break;
     }
+}
+
+void handle_dialogue_keys(SDL_Scancode code) {
+  switch (code) {
+    case SDL_SCANCODE_W:
+      set_active_option(npc_array.npcs[npc_contact_idx].dialogue, -1);
+      break;
+    case SDL_SCANCODE_S:
+      set_active_option(npc_array.npcs[npc_contact_idx].dialogue, 1);
+      break;
+    case SDL_SCANCODE_E:
+      OptionAction selected_option = trigger_active_option(npc_array.npcs[npc_contact_idx].dialogue);
+      if (selected_option == OptionExit) {
+        show_dialog = 0;
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
+  if (event->type == SDL_EVENT_QUIT) {
+    return SDL_APP_SUCCESS;
+  } else if (event->type == SDL_EVENT_KEY_DOWN) {
+    if (show_dialog) {
+      handle_dialogue_keys(event->key.scancode);
+    } else {
+      handle_gameplay_keys(event->key.scancode);
+    }
   } else if (event->type == SDL_EVENT_KEY_UP) {
-    if (main_char->base->current_animation->key_down_activation) {
-      reset_animation(main_char->base);
+    if (!show_dialog) {
+      if (main_char->base->current_animation->key_down_activation) {
+        reset_animation(main_char->base);
+      }
     }
   }
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-  SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+  SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
   update_entity(main_char->base);
@@ -98,8 +130,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     }
   }
 
-  if (show_dialog) {
-    render_ui();
+  if (show_dialog && npc_contact_idx > -1) {
+    render_dialogue(npc_array.npcs[npc_contact_idx].dialogue);
   }
 
   SDL_RenderPresent(renderer);
@@ -112,4 +144,5 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
   /* free_npcs(&npc_array); */
   free_assets();
   free_ui();
+  free_conversations();
 }
