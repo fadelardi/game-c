@@ -14,7 +14,7 @@ static SDL_Renderer *renderer = NULL;
 static MainChar *main_char = NULL;
 static NPCArray npc_array = {NULL, 0};
 static int npc_contact_idx = -1;
-static int show_dialog = 0;
+static enum GameStates { GAMEPLAY, DIALOGUE } game_state = GAMEPLAY;
 
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 1000
@@ -60,7 +60,7 @@ void handle_gameplay_keys(SDL_Scancode code) {
       break;
     case SDL_SCANCODE_E:
       if (npc_contact_idx > -1) {
-        show_dialog = 1;
+        game_state = DIALOGUE;
       }
       break;
     default:
@@ -77,9 +77,11 @@ void handle_dialogue_keys(SDL_Scancode code) {
       set_active_option(npc_array.npcs[npc_contact_idx].dialogue, 1);
       break;
     case SDL_SCANCODE_E:
-      OptionAction selected_option = trigger_active_option(npc_array.npcs[npc_contact_idx].dialogue);
-      if (selected_option == OptionExit) {
-        show_dialog = 0;
+      ReplyType selected_option = trigger_active_option(npc_array.npcs[npc_contact_idx].dialogue);
+      if (selected_option == ReplyExit || selected_option == ReplyFight) {
+        game_state = GAMEPLAY;
+      } else if (selected_option == ReplyContinue) {
+        move_conversation_forward(npc_array.npcs[npc_contact_idx].dialogue);
       }
       break;
     default:
@@ -91,13 +93,13 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   if (event->type == SDL_EVENT_QUIT) {
     return SDL_APP_SUCCESS;
   } else if (event->type == SDL_EVENT_KEY_DOWN) {
-    if (show_dialog) {
+    if (game_state == DIALOGUE) {
       handle_dialogue_keys(event->key.scancode);
     } else {
       handle_gameplay_keys(event->key.scancode);
     }
   } else if (event->type == SDL_EVENT_KEY_UP) {
-    if (!show_dialog) {
+    if (game_state == GAMEPLAY) {
       if (main_char->base->current_animation->key_down_activation) {
         reset_animation(main_char->base);
       }
@@ -130,7 +132,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     }
   }
 
-  if (show_dialog && npc_contact_idx > -1) {
+  if (game_state == DIALOGUE && npc_contact_idx > -1) {
     render_dialogue(npc_array.npcs[npc_contact_idx].dialogue);
   }
 
@@ -141,7 +143,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
   free_main_char(main_char);
-  /* free_npcs(&npc_array); */
+  free_npcs(&npc_array);
   free_assets();
   free_ui();
   free_conversations();

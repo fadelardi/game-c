@@ -75,14 +75,14 @@ void render_dialogue(Dialogue *d) {
     render_text_paragraph(line->text, x + LINE_HEIGHT, y + LINE_HEIGHT, 0);
 
     int option_start_y = y + LINE_HEIGHT + text_texture->h;
-    if (line->options != NULL) {
-      for (int i = 0; i < line->options_count; i++) {
-        DialogueOption *option = &line->options[i];
-        render_text_paragraph(option->option_text, x + LINE_HEIGHT, option_start_y + ((i + 1) * LINE_HEIGHT), d->active_option == i);
+    if (line->replies != NULL) {
+      for (int i = 0; i < line->replies_count; i++) {
+        DialogueReply *reply = &line->replies[i];
+        render_text_paragraph(reply->option_text, x + LINE_HEIGHT, option_start_y + ((i + 1) * LINE_HEIGHT), d->active_option == i);
         option_start_y += text_surface->h;
       }
     } else {
-      DialogueOption *option = create_leave_option();
+      DialogueReply *option = create_leave_option();
       render_text_paragraph(option->option_text, x + LINE_HEIGHT, option_start_y + LINE_HEIGHT, 1);
     }
   }

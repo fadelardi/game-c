@@ -1,30 +1,37 @@
 #ifndef DIALOGUE_H
 #define DIALOGUE_H
 
-typedef enum { OptionExit, OptionFight, OptionIgnore } OptionAction;
+#include <stddef.h>
+
+typedef enum { ReplyExit, ReplyFight, ReplyContinue } ReplyType;
 
 typedef struct {
   char *option_text;
-  OptionAction action;
-} DialogueOption;
+  ReplyType action;
+} DialogueReply;
 
 typedef struct {
   char *text;
-  int options_count;
-  DialogueOption *options;
+  size_t replies_count;
+  DialogueReply *replies;
 } DialogueLine;
 
 typedef struct {
   DialogueLine *lines;
   int bookmark;
   int active_option;
-  int count;
+  size_t line_count;
 } Dialogue;
 
-Dialogue *create_conversation(DialogueLine *lines, int line_count);
-DialogueOption *create_leave_option();
-OptionAction trigger_active_option(Dialogue *d);
+Dialogue *init_dialogue();
+void add_dialogue(Dialogue *dialogue, DialogueLine *lines);
+DialogueLine *init_dialogue_lines(size_t total_lines);
+void add_dialogue_line(DialogueLine *line, char *text, DialogueReply *replies);
+DialogueReply *init_replies(size_t total_replies);
+void add_reply(DialogueReply *option, char *text, ReplyType action);
+DialogueReply *create_leave_option();
+ReplyType trigger_active_option(Dialogue *d);
+void move_conversation_forward(Dialogue *d);
 void set_active_option(Dialogue *d, int direction);
-void free_dialog(Dialogue *dialogue);
 
 #endif
