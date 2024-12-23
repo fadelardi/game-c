@@ -23,15 +23,5 @@
         ]
       }
     ]
-  },
-    {
-    "lines": [
-      {
-        "text": "This is a second conversation.",
-        "replies": [
-          {"text": "Okay", "type": "Continue"}
-        ]
-      }
-    ]
   }
 ]

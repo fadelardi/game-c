@@ -117,7 +117,6 @@ void move_conversation(Dialogue *d, unsigned int bookmark) {
     return;
   }
 
-  SDL_Log("Moving conversation to %d / %lu", bookmark, d->line_count);
   if (bookmark < d->line_count) {
     d->bookmark = bookmark;
     d->active_option = 0;
@@ -133,7 +132,7 @@ void move_conversation_forward(Dialogue *d) {
   move_conversation(d, d->bookmark + 1);
 }
 
-ReplyType dialogue_pick_reply(Dialogue *d) {
+int dialogue_pick_reply(Dialogue *d) {
   if (d == NULL || d->lines == NULL) {
     SDL_Log("Unable to trigger reply action");
     return ReplyContinue;

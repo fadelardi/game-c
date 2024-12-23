@@ -1,4 +1,6 @@
 #include "assets.h"
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_render.h>
 #include <SDL3_image/SDL_image.h>
 
 Asset assets[NUM_ASSETS] = {{NULL, "idle.png"},

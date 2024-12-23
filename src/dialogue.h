@@ -40,7 +40,7 @@ void add_dialogue_line(DialogueLine *lines, char *text, DialogueReply *replies, 
 void add_reply(DialogueReply *replies, char *text, ReplyType action, int reply_idx);
 DialogueLine *init_dialogue_lines(size_t total_lines);
 DialogueReply *init_replies(size_t total_replies);
-ReplyType dialogue_pick_reply(Dialogue *d);
+int dialogue_pick_reply(Dialogue *d);
 void move_conversation(Dialogue *d, unsigned int bookmark);
 void move_conversation_forward(Dialogue *d);
 void dialogue_select_reply(Dialogue *d, int direction);
