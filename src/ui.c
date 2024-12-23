@@ -9,6 +9,7 @@ static SDL_Texture *text_texture = NULL;
 static const char *DEFAULT_FONT = "NotoSansMono-Regular.ttf";
 static const int DIALOG_WIDTH = 400;
 static const int DIALOG_HEIGHT = 100;
+static const int LINE_HEIGHT = 5;
 
 void init_ui(SDL_Renderer *renderer) {
   if (!TTF_Init()) {
@@ -32,7 +33,12 @@ void init_ui(SDL_Renderer *renderer) {
   }
 }
 
-void render_text_paragraph(char *text, int x, int y, int active) {
+void render_text_paragraph(const char *text, int x, int y, int active) {
+  if (text == NULL) {
+    SDL_Log("No text to render");
+    return;
+  }
+
   SDL_Color text_colour = {0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE};
   if (active) {
     text_colour.r = 0xEE;
@@ -40,11 +46,11 @@ void render_text_paragraph(char *text, int x, int y, int active) {
     text_colour.b = 0xEE;
   }
 
-  text_surface = TTF_RenderText_Solid_Wrapped(font, text, 0, text_colour, DIALOG_WIDTH);
+  text_surface =
+      TTF_RenderText_Solid_Wrapped(font, text, 0, text_colour, DIALOG_WIDTH);
 
   if (text_surface == NULL) {
     SDL_Log("Failed to create text surface: %s", SDL_GetError());
-    SDL_Quit();
     return;
   }
 
@@ -53,7 +59,6 @@ void render_text_paragraph(char *text, int x, int y, int active) {
   if (text_texture == NULL) {
     SDL_Log("Failed to create text texture: %s", SDL_GetError());
     SDL_DestroySurface(text_surface);
-    SDL_Quit();
     return;
   }
 
@@ -62,29 +67,53 @@ void render_text_paragraph(char *text, int x, int y, int active) {
 }
 
 void render_dialogue(Dialogue *d) {
-  const int LINE_HEIGHT = 5;
-  if (d != NULL) {
-    int x = 20;
-    int y = 20;
+  if (d == NULL) {
+    SDL_Log("No dialogue to render");
+    return;
+  }
 
-    SDL_SetRenderDrawColor(ui_renderer, 0xB4, 0xB4, 0xB9, SDL_ALPHA_OPAQUE);
-    SDL_FRect rect = {x, y, DIALOG_WIDTH, DIALOG_HEIGHT};
-    SDL_RenderFillRect(ui_renderer, &rect);
+  int x = 20;
+  int y = 20;
 
-    DialogueLine *line = &d->lines[d->bookmark];
-    render_text_paragraph(line->text, x + LINE_HEIGHT, y + LINE_HEIGHT, 0);
+  SDL_SetRenderDrawColor(ui_renderer, 0xB4, 0xB4, 0xB9, SDL_ALPHA_OPAQUE);
+  SDL_FRect rect = {x, y, DIALOG_WIDTH, DIALOG_HEIGHT};
+  SDL_RenderFillRect(ui_renderer, &rect);
 
-    int option_start_y = y + LINE_HEIGHT + text_texture->h;
-    if (line->replies != NULL) {
-      for (int i = 0; i < line->replies_count; i++) {
-        DialogueReply *reply = &line->replies[i];
-        render_text_paragraph(reply->option_text, x + LINE_HEIGHT, option_start_y + ((i + 1) * LINE_HEIGHT), d->active_option == i);
-        option_start_y += text_surface->h;
-      }
-    } else {
-      DialogueReply *option = create_leave_option();
-      render_text_paragraph(option->option_text, x + LINE_HEIGHT, option_start_y + LINE_HEIGHT, 1);
+  if (d->lines == NULL) {
+    SDL_Log("No dialogue lines to render");
+    return;
+  }
+
+  if (d->bookmark < 0 || d->bookmark >= d->line_count) {
+    SDL_Log("Dialogue bookmark out of bounds: %d (line_count: %zu)",
+            d->bookmark, d->line_count);
+    return;
+  }
+
+  DialogueLine *l = &d->lines[d->bookmark];
+
+  if (l == NULL) {
+    SDL_Log("dialogue line does not exist %i", d->bookmark);
+    return;
+  }
+
+  render_text_paragraph(l->text, x + LINE_HEIGHT, y + LINE_HEIGHT, 0);
+
+  int option_start_y = y + LINE_HEIGHT + text_texture->h;
+  if (l->replies == NULL) {
+     SDL_Log("No replies to render");
+     return;
+  }
+  
+  for (int i = 0; i < l->replies_count; i++) {
+    if (l->replies[i].option_text == NULL) {
+      SDL_Log("No reply to render for idx %i", i);
+      return;
     }
+    render_text_paragraph(l->replies[i].option_text, x + LINE_HEIGHT,
+                          option_start_y + (i * LINE_HEIGHT),
+                          d->active_option == i);
+    option_start_y += text_surface->h;
   }
 }
 

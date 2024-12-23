@@ -9,7 +9,8 @@ typedef struct {
     int direction;
     int anim_delay_counter;
     int move_speed;
-    SDL_FRect dest_rect;
+    SDL_FRect visual_rect;
+    SDL_FRect hitbox;
     Animation *current_animation;
     Animation *idle_animation;
     Animation *walk_animation;

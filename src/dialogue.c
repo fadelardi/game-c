@@ -2,114 +2,166 @@
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_main.h>
 
-static size_t reply_count = 0;
-static size_t line_count = 0;
+void add_dialogue(Dialogue *dialogue, DialogueLine *lines, size_t line_count) {
+    dialogue->lines = lines;
+    dialogue->line_count = line_count;
+    dialogue->bookmark = 0;
+    dialogue->active_option = 0;
+}
 
-Dialogue *init_dialogue() {
-  Dialogue *d;
-  d = (Dialogue *)SDL_malloc(sizeof(Dialogue));
+void add_dialogue_line(DialogueLine *line, char *text, DialogueReply *replies, size_t replies_count, int line_idx) {
+    line->text = SDL_strdup(text);
+    line->replies = replies;
+    line->replies_count = replies_count;
+}
 
-  if (d == NULL) {
-    SDL_Log("Unable to create conversation: %s", SDL_GetError());
-    SDL_Quit();
+void add_reply(DialogueReply *reply, char *text, ReplyType action, int reply_idx) {
+    reply->option_text = SDL_strdup(text);
+    reply->action = action;
+}
+
+void add_conversation(Conversations *conversations, int idx, char *line_texts[],
+                    char **replies_text[], const int *replies_types[],
+                    const size_t replies_totals[], const size_t lines_total) {
+    if (!conversations) {
+        SDL_Log("add_conversation: Conversations is NULL");
+        return;
+    }
+    if (idx < 0 || idx >= conversations->total_conversations) {
+        SDL_Log("add_conversation: Index out of bounds");
+        return;
+    }
+    Dialogue *dialogue = (Dialogue *)SDL_malloc(sizeof(Dialogue));
+    DialogueLine *lines = (DialogueLine *)SDL_malloc(sizeof(DialogueLine) * lines_total);
+
+    if (!dialogue || !lines) {
+        SDL_Log("add_conversation: Failed to allocate memory");
+        SDL_free(dialogue);
+        SDL_free(lines);
+        return;
+    }
+
+    for (size_t i = 0; i < lines_total; i++) {
+        DialogueReply *replies = (DialogueReply *)SDL_malloc(sizeof(DialogueReply) * replies_totals[i]);
+
+        if (!replies) {
+            SDL_Log("add_conversation: Failed to allocate memory for replies");
+            for(size_t k = 0; k < i; k++){
+                SDL_free(lines[k].replies);
+            }
+            SDL_free(dialogue);
+            SDL_free(lines);
+            return;
+        }
+
+        for (size_t j = 0; j < replies_totals[i]; j++) {
+            add_reply(&replies[j], replies_text[i][j], replies_types[i][j], j);
+        }
+
+        add_dialogue_line(&lines[i], line_texts[i], replies, replies_totals[i], i);
+    }
+
+    add_dialogue(dialogue, lines, lines_total);
+    conversations->list[idx] = dialogue;
+}
+
+void init_conversations(Conversations **conversations, int num_conversations) {
+  *conversations = (Conversations *)SDL_malloc(sizeof(Conversations));
+
+  if ((*conversations) == NULL) {
+    SDL_Log("Failed to allocate memory for conversations: %s", SDL_GetError());
+    return;
   }
 
-  return d;
-}
+  (*conversations)->total_conversations = num_conversations;
+  (*conversations)->list =
+      (Dialogue **)SDL_malloc(sizeof(Dialogue *) * num_conversations);
 
-void add_dialogue(Dialogue *d, DialogueLine *lines) {
-  d->lines = lines;
-  d->line_count = line_count;
-  d->bookmark = 0;
-  d->active_option = 0;
-}
-
-DialogueLine *init_dialogue_lines(const size_t total_lines) {
-  DialogueLine *lines = (DialogueLine *)SDL_malloc(sizeof(DialogueLine) * total_lines);
-
-  if (lines == NULL) {
-    SDL_Log("Failed to allocate memory for conversation lines: %s", SDL_GetError());
-    SDL_Quit();
+  if ((*conversations)->list == NULL) {
+    SDL_Log("Failed to allocate memory for conversation list: %s", SDL_GetError());
+    SDL_free(*conversations); // Free previously allocated memory
+    *conversations = NULL;
+    return;
   }
 
-  return lines;
+  for (size_t i = 0; i < num_conversations; i++) {
+    (*conversations)->list[i] = NULL;
+  }
 }
 
-void add_dialogue_line(DialogueLine *lines, char *text, DialogueReply *replies) {
-  lines[line_count].text = text;
-  lines[line_count].replies = replies;
-  lines[line_count].replies_count = reply_count;
-  line_count++;
-  reply_count = 0;
+void free_conversations(Conversations *conversations) {
+    if (!conversations) return;
+
+    for (int i = 0; i < conversations->total_conversations; i++) {
+        if (conversations->list[i]) {
+            for (int j = 0; j < conversations->list[i]->line_count; j++) {
+                if (conversations->list[i]->lines[j].replies) {
+                    for(size_t k = 0; k < conversations->list[i]->lines[j].replies_count; k++){
+                        SDL_free(conversations->list[i]->lines[j].replies[k].option_text);
+                    }
+                    SDL_free(conversations->list[i]->lines[j].replies);
+                }
+                SDL_free(conversations->list[i]->lines[j].text); //Free the strdup
+            }
+            SDL_free(conversations->list[i]->lines);
+            SDL_free(conversations->list[i]);
+        }
+    }
+    SDL_free(conversations->list);
+    SDL_free(conversations);
 }
 
-DialogueReply *init_replies(const size_t replies_total) {
-  DialogueReply *replies = (DialogueReply *)SDL_malloc(sizeof(DialogueReply) * replies_total);
-
-  if (replies == NULL) {
-    SDL_Log("Failed to allocate memory for conversation replies: %s", SDL_GetError());
-    SDL_Quit();
+void move_conversation(Dialogue *d, unsigned int bookmark) {
+   if (d == NULL) {
+    SDL_Log("Unable to move conversation");
+    return;
   }
 
-  return replies;
-}
-
-void add_reply(DialogueReply *replies, char *text, ReplyType action) {
-  replies[reply_count].option_text = text;
-  replies[reply_count].action = action;
-  reply_count++;
-}
-
-void set_active_option(Dialogue *d, int direction) {
-  int new_option = d->active_option + direction;
-
-  if (new_option < 0) {
-    new_option = d->lines[d->bookmark].replies_count - 1;
-  } else if (new_option >= d->lines[d->bookmark].replies_count) {
-    new_option = 0;
-  }
-
-  d->active_option = new_option;
-}
-
-void move_conversation_forward(Dialogue *d) {
-  if (d->bookmark < d->line_count - 1) {
-    d->bookmark++;
+  SDL_Log("Moving conversation to %d / %lu", bookmark, d->line_count);
+  if (bookmark < d->line_count) {
+    d->bookmark = bookmark;
     d->active_option = 0;
   }
 }
 
-ReplyType trigger_active_option(Dialogue *d) {
-  if (d != NULL && d->lines != NULL) {
-    DialogueLine l = d->lines[d->bookmark];
-    if (l.replies != NULL && d->active_option < l.replies_count) {
-      return l.replies[d->active_option].action;
-    }
+void move_conversation_forward(Dialogue *d) {
+  if (d == NULL) {
+    SDL_Log("Unable to move conversation forward: %s", SDL_GetError());
+    return;
+  }
+
+  move_conversation(d, d->bookmark + 1);
+}
+
+ReplyType dialogue_pick_reply(Dialogue *d) {
+  if (d == NULL || d->lines == NULL) {
+    SDL_Log("Unable to trigger reply action");
+    return ReplyContinue;
+  }
+
+  DialogueLine l = d->lines[d->bookmark];
+  if (l.replies != NULL && d->active_option < l.replies_count) {
+    return l.replies[d->active_option].action;
   }
 
   return ReplyContinue;
 }
 
-DialogueReply *create_leave_option(int reply_count) {
-  DialogueReply *opt;
-  opt = (DialogueReply *)SDL_malloc(sizeof(DialogueReply));
-
-  if (opt == NULL) {
-    SDL_Log("Unable to create default option: %s", SDL_GetError());
-    SDL_Quit();
+void dialogue_select_reply(Dialogue *d, int direction) {
+  if (d == NULL || d->lines == NULL) {
+    SDL_Log("Unable to select reply");
+    return;
   }
 
-  char* text = (char *)SDL_malloc(8 * sizeof(char));
-  if (text == NULL) {
-    SDL_Log("Unable to allocate memory for text: %s", SDL_GetError());
-    SDL_Quit();
+  DialogueLine l = d->lines[d->bookmark];
+  if (l.replies == NULL) {
+    SDL_Log("Empty replies");
+    return;
   }
-  text[0] = '\0';
-  SDL_snprintf(text, 9, "%d", reply_count);
-  SDL_strlcat(text, ". Leave", 9);
 
-  opt->option_text = text;
-  opt->action = ReplyExit;
-
-  return opt;
+  if (direction < 0 && d->active_option > 0) {
+    d->active_option--;
+  } else if (direction > 0 && d->active_option < l.replies_count - 1) {
+    d->active_option++;
+  }
 }

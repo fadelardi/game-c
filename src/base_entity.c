@@ -8,6 +8,12 @@ static const int MOVE_SPEED = 5;
 BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation *walk_animation) {
     BaseEntity *e = (BaseEntity*) SDL_malloc(sizeof(BaseEntity));
 
+    if (e == NULL) {
+        SDL_Log("Failed to allocate memory for base entity: %s", SDL_GetError());
+        SDL_Quit();
+        return NULL;
+    }
+
     e->x = x;
     e->y = y;
     e->direction = 1;
@@ -16,8 +22,9 @@ BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation 
     e->current_animation = idle_animation;
     e->idle_animation = idle_animation;
     e->walk_animation = walk_animation;
-    SDL_FRect v = { 0, 0, DEFAULT_CHAR_SIZE * 2, DEFAULT_CHAR_SIZE * 2 };
-    e->dest_rect = v;
+    SDL_FRect visual_rect = { x, y, DEFAULT_CHAR_SIZE * 2, DEFAULT_CHAR_SIZE * 2 };
+    e->visual_rect = visual_rect;
+    e->hitbox = visual_rect;
 
     return e;
 }
@@ -53,15 +60,15 @@ void move_entity(BaseEntity *e, int dir) {
 
 void render_entity(BaseEntity *e, SDL_Renderer *renderer) {
     if (e->direction == -1) {
-        SDL_RenderTextureRotated(renderer, e->current_animation->texture, &e->current_animation->sprite_rect, &e->dest_rect, 0, NULL, SDL_FLIP_HORIZONTAL);
+        SDL_RenderTextureRotated(renderer, e->current_animation->texture, &e->current_animation->sprite_rect, &e->visual_rect, 0, NULL, SDL_FLIP_HORIZONTAL);
     } else {
-        SDL_RenderTexture(renderer, e->current_animation->texture, &e->current_animation->sprite_rect, &e->dest_rect);
+        SDL_RenderTexture(renderer, e->current_animation->texture, &e->current_animation->sprite_rect, &e->visual_rect);
     }
 }
 
 void update_entity(BaseEntity *e) {
-    e->dest_rect.x = e->x;
-    e->dest_rect.y = e->y;
+    e->visual_rect.x = e->x;
+    e->visual_rect.y = e->y;
     e->anim_delay_counter++;
 
     if (e->anim_delay_counter == FRAME_UPDATE_DELAY) {

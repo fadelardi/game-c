@@ -1,0 +1,37 @@
+[
+  {
+    "lines": [
+      {
+        "text": "This is initial exposition.",
+        "replies": [
+          {"text": "Continue", "type": "Continue"}
+        ]
+      },
+      {
+        "text": "This is the second line.",
+        "replies": [
+          { "text": "Another Option", "type": "-2"},
+          {"text": "Slap", "type": "Fight"},
+          {"text": "Leave", "type": "Exit"}
+        ]
+      },
+      {
+        "text": "This is a branching path from the second line.",
+        "replies": [
+          {"text": "Slap", "type": "Fight"},
+          {"text": "Leave", "type": "Exit"}
+        ]
+      }
+    ]
+  },
+    {
+    "lines": [
+      {
+        "text": "This is a second conversation.",
+        "replies": [
+          {"text": "Okay", "type": "Continue"}
+        ]
+      }
+    ]
+  }
+]

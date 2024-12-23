@@ -1,8 +1,7 @@
 #include "npc.h"
 #include "constants.h"
-#include "conversations.h"
 
-NPC create_npc(int x, int y, const int CONV_IDX) {
+NPC create_npc(int x, int y, const int CONV_IDX, Conversations *conversations) {
   NPC npc;
 
   Animation *idle_animation = create_animation(
@@ -11,12 +10,22 @@ NPC create_npc(int x, int y, const int CONV_IDX) {
       DEFAULT_CHAR_SIZE, DEFAULT_CHAR_SIZE, 6, WITCH2_WALK_IDX, 1);
 
   BaseEntity *b = init_base_entity(x, y, idle_animation, walk_animation);
-  npc.base = *b;
 
-  if (CONV_IDX > -1) {
-    npc.dialogue = conversations[CONV_IDX];
+  if (b == NULL) {
+    return (NPC){0};
   }
+  
+  npc.base = *b;
+  SDL_free(b);
 
+  npc.dialogue = NULL;
+
+  if (conversations != NULL) {
+    if (CONV_IDX > -1 && CONV_IDX < conversations->total_conversations) {
+      npc.dialogue = conversations->list[CONV_IDX];
+    }
+  } 
+  
   return npc;
 }
 
@@ -44,7 +53,7 @@ void remove_npcs(NPCArray *npc_array, int id) {
           (NPC *)SDL_realloc(npc_array->npcs, npc_array->count * sizeof(NPC));
 
       if (!npc_array->npcs && npc_array->count > 0) {
-        SDL_Log("Failed to reallocate when deleting npcs");
+        SDL_Log("Failed to reallocate when deleting npcs: %s", SDL_GetError());
         SDL_Quit();
       }
 

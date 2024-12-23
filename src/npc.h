@@ -12,7 +12,7 @@ typedef struct {
   int count;
 } NPCArray;
 
-NPC create_npc(int x, int y, const int CONV_IDX);
+NPC create_npc(int x, int y, const int CONV_IDX, Conversations *conversations);
 void update_npc(NPC *npc);
 void add_npc(NPCArray *npc_array, NPC new_npc);
 void remove_npcs(NPCArray *npc_array, int id);
