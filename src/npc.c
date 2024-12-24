@@ -1,20 +1,20 @@
 #include "npc.h"
-#include "constants.h"
+#include "animation.h"
 
 NPC create_npc(int x, int y, const int CONV_IDX, Conversations *conversations) {
   NPC npc;
 
-  Animation *idle_animation = create_animation(
-      DEFAULT_CHAR_SIZE, DEFAULT_CHAR_SIZE, 6, WITCH2_IDLE_IDX, 1);
-  Animation *walk_animation = create_animation(
-      DEFAULT_CHAR_SIZE, DEFAULT_CHAR_SIZE, 6, WITCH2_WALK_IDX, 1);
+  Animation *idle_animation =
+      create_animation(6, "npc_idle", 1, AnimationDelayIdle, 0, 0);
+  Animation *walk_animation =
+      create_animation(6, "npc_walk", 1, AnimationDelayWalk, 0, 0);
 
   BaseEntity *b = init_base_entity(x, y, idle_animation, walk_animation);
 
   if (b == NULL) {
     return (NPC){0};
   }
-  
+
   npc.base = *b;
   SDL_free(b);
 
@@ -24,8 +24,8 @@ NPC create_npc(int x, int y, const int CONV_IDX, Conversations *conversations) {
     if (CONV_IDX > -1 && CONV_IDX < conversations->total_conversations) {
       npc.dialogue = conversations->list[CONV_IDX];
     }
-  } 
-  
+  }
+
   return npc;
 }
 

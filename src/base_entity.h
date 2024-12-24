@@ -3,6 +3,8 @@
 
 #include "animation.h"
 
+#define DEFAULT_CHAR_SIZE 128
+
 typedef struct {
     int x;
     int y;
@@ -16,10 +18,18 @@ typedef struct {
     Animation *walk_animation;
 } BaseEntity;
 
+typedef enum {
+    D_LEFT,
+    D_RIGHT,
+    D_UP,
+    D_DOWN
+} MOVEMENT_DIRECTION;
+
 BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation *walk_animation);
 void render_entity(BaseEntity *e, SDL_Renderer *renderer);
 void update_entity(BaseEntity *e);
-void move_entity(BaseEntity *e, int dir);
+bool check_collision(BaseEntity *e1, BaseEntity *e2);
+void move_entity(BaseEntity *e, MOVEMENT_DIRECTION dir);
 void free_entity(BaseEntity *e);
 void reset_animation(BaseEntity *e);
 

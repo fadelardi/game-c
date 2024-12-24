@@ -3,11 +3,11 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3_image/SDL_image.h>
 
-Asset assets[NUM_ASSETS] = {{NULL, "idle.png"},
-                            {NULL, "walk.png"},
-                            {NULL, "attack_1.png"},
-                            {NULL, "npc_idle.png"},
-                            {NULL, "npc_walk.png"}};
+Asset assets[NUM_ASSETS] = {{NULL, "idle.png", "witch_idle"},
+                            {NULL, "walk.png", "witch_walk"},
+                            {NULL, "attack_1.png", "witch_attack_1"},
+                            {NULL, "npc_idle.png", "npc_idle"},
+                            {NULL, "npc_walk.png", "npc_walk"}};
 
 SDL_Texture *load_sprite(SDL_Renderer *renderer, const char *sprite_name) {
   SDL_Texture *texture = NULL;
@@ -49,6 +49,16 @@ void init_assets(SDL_Renderer *renderer) {
               SDL_GetError());
     }
   }
+}
+
+SDL_Texture *get_asset_by_tag(const char *tag) {
+  for (int i = 0; i < NUM_ASSETS; i++) {
+    if (strcmp(assets[i].tag, tag) == 0) {
+      return assets[i].texture;
+    }
+  }
+
+  return NULL;
 }
 
 void free_assets() {

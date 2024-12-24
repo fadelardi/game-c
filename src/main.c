@@ -3,8 +3,8 @@
 #define SDL_MAIN_USE_CALLBACKS 1
 #include "assets.h"
 #include "base_entity.h"
-#include "conversation_list.h"
 #include "char_entity.h"
+#include "conversation_list.h"
 #include "npc.h"
 #include "ui.h"
 #include <SDL3/SDL.h>
@@ -39,7 +39,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
   init_ui(renderer);
   load_conversations(&conversations);
   main_char = create_char_entity(0, 0);
-  
+
   NPC npc = create_npc(50, 50, 0, conversations);
   add_npc(&npc_array, npc);
 
@@ -51,58 +51,60 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
 }
 
 void handle_gameplay_keys(SDL_Scancode code) {
-   switch (code) {
-    case SDL_SCANCODE_A:
-      move_entity(main_char->base, 0);
-      break;
-    case SDL_SCANCODE_D:
-      move_entity(main_char->base, 1);
-      break;
-    case SDL_SCANCODE_W:
-      move_entity(main_char->base, 2);
-      break;
-    case SDL_SCANCODE_S:
-      move_entity(main_char->base, 3);
-      break;
-    case SDL_SCANCODE_Q:
-      char_attack(main_char);
-      break;
-    case SDL_SCANCODE_E:
-      if (npc_contact_idx > -1) {
-        game_state = DIALOGUE;
-      }
-      break;
-    case SDL_SCANCODE_ESCAPE:
-      SDL_Quit();
-      break;
-    default:
-      break;
+  switch (code) {
+  case SDL_SCANCODE_A:
+    move_entity(main_char->base, D_LEFT);
+    break;
+  case SDL_SCANCODE_D:
+    move_entity(main_char->base, D_RIGHT);
+    break;
+  case SDL_SCANCODE_W:
+    move_entity(main_char->base, D_UP);
+    break;
+  case SDL_SCANCODE_S:
+    move_entity(main_char->base, D_DOWN);
+    break;
+  case SDL_SCANCODE_Q:
+    char_attack(main_char);
+    break;
+  case SDL_SCANCODE_E:
+    if (npc_contact_idx > -1) {
+      game_state = DIALOGUE;
     }
+    break;
+  case SDL_SCANCODE_ESCAPE:
+    SDL_Quit();
+    break;
+  default:
+    break;
+  }
 }
 
 void handle_dialogue_keys(SDL_Scancode code) {
   int selected_option;
 
   switch (code) {
-    case SDL_SCANCODE_W:
-      dialogue_select_reply(npc_array.npcs[npc_contact_idx].dialogue, -1);
-      break;
-    case SDL_SCANCODE_S:
-      dialogue_select_reply(npc_array.npcs[npc_contact_idx].dialogue, 1);
-      break;
-    case SDL_SCANCODE_E:
-      selected_option = dialogue_pick_reply(npc_array.npcs[npc_contact_idx].dialogue);
-      if (selected_option == ReplyExit || selected_option == ReplyFight) {
-        game_state = GAMEPLAY;
-      } else if (selected_option == ReplyContinue) {
-        move_conversation_forward(npc_array.npcs[npc_contact_idx].dialogue);
-      } else {
-        unsigned int jump_to_index = selected_option * -1;
-        move_conversation(npc_array.npcs[npc_contact_idx].dialogue, jump_to_index);
-      }
-      break;
-    default:
-      break;
+  case SDL_SCANCODE_W:
+    dialogue_select_reply(npc_array.npcs[npc_contact_idx].dialogue, -1);
+    break;
+  case SDL_SCANCODE_S:
+    dialogue_select_reply(npc_array.npcs[npc_contact_idx].dialogue, 1);
+    break;
+  case SDL_SCANCODE_E:
+    selected_option =
+        dialogue_pick_reply(npc_array.npcs[npc_contact_idx].dialogue);
+    if (selected_option == ReplyExit || selected_option == ReplyFight) {
+      game_state = GAMEPLAY;
+    } else if (selected_option == ReplyContinue) {
+      move_conversation_forward(npc_array.npcs[npc_contact_idx].dialogue);
+    } else {
+      unsigned int jump_to_index = selected_option * -1;
+      move_conversation(npc_array.npcs[npc_contact_idx].dialogue,
+                        jump_to_index);
+    }
+    break;
+  default:
+    break;
   }
 }
 
@@ -136,8 +138,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     render_entity(&npc_array.npcs[i].base, renderer);
 
     if (npc_contact_idx != -1 || !has_npc_contact) {
-      if (SDL_HasRectIntersectionFloat(&main_char->base->visual_rect,
-                                       &npc_array.npcs[i].base.visual_rect)) {
+      if (check_collision(main_char->base, &npc_array.npcs[i].base)) {
         npc_contact_idx = i;
         has_npc_contact = 1;
         break;

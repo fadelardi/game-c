@@ -1,5 +1,5 @@
 #include "char_entity.h"
-#include "constants.h"
+#include "animation.h"
 
 MainChar *create_char_entity(int x, int y) {
   MainChar *e = (MainChar *)SDL_malloc(sizeof(MainChar));
@@ -9,15 +9,15 @@ MainChar *create_char_entity(int x, int y) {
     return NULL;
   }
 
-  Animation *idle_animation = create_animation(
-      DEFAULT_CHAR_SIZE, DEFAULT_CHAR_SIZE, 6, WITCH_IDLE_IDX, 1);
-  Animation *walk_animation = create_animation(
-      DEFAULT_CHAR_SIZE, DEFAULT_CHAR_SIZE, 6, WITCH_WALK_IDX, 1);
+  Animation *idle_animation =
+      create_animation(6, "witch_idle", 1, AnimationDelayIdle, 0, 0);
+  Animation *walk_animation =
+      create_animation(6, "witch_walk", 1, AnimationDelayWalk, 0, 0);
 
   e->base = init_base_entity(x, y, idle_animation, walk_animation);
 
-  Animation *quick_attack_animation = create_animation(
-      DEFAULT_CHAR_SIZE, DEFAULT_CHAR_SIZE, 5, WITCH_Q_ATTACK_IDX, 0);
+  Animation *quick_attack_animation =
+      create_animation(5, "witch_attack_1", 0, AnimationDelayAttack, 0, 0);
 
   e->quick_attack_animation = quick_attack_animation;
 
