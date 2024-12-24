@@ -61,15 +61,23 @@ bool check_collision(BaseEntity *e1, BaseEntity *e2) {
     return SDL_HasRectIntersectionFloat(&e1->hitbox, &e2->hitbox);
 }
 
+void render_hitboxes(BaseEntity *e, SDL_Renderer *renderer) {
+    if (e->current_animation->hitbox != NULL && e->current_animation->current_frame > 0) {
+        SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xBB, SDL_ALPHA_OPAQUE);
+        SDL_RenderRect(renderer, &e->hitbox);
+        SDL_SetRenderDrawColor(renderer, 0xBB, 0x00, 0x00, SDL_ALPHA_OPAQUE);
+        SDL_RenderRect(renderer, e->current_animation->hitbox);
+    }
+}
+
 void render_entity(BaseEntity *e, SDL_Renderer *renderer) {
     if (e->direction == -1) {
         SDL_RenderTextureRotated(renderer, e->current_animation->texture, &e->current_animation->sprite_rect, &e->visual_rect, 0, NULL, SDL_FLIP_HORIZONTAL);
     } else {
         SDL_RenderTexture(renderer, e->current_animation->texture, &e->current_animation->sprite_rect, &e->visual_rect);
-        // SDL_Log("Rendering entity %f %f %f %f", e->hitbox.x, e->hitbox.y, e->hitbox.w, e->hitbox.h); 
-        SDL_SetRenderDrawColor(renderer, 0xBB, 0xB1, 0xCC, SDL_ALPHA_OPAQUE);
     }
-    SDL_RenderRect(renderer, &e->hitbox);
+
+    render_hitboxes(e, renderer);
 }
 
 void update_entity(BaseEntity *e) {
@@ -91,7 +99,7 @@ void reset_animation(BaseEntity *e) {
 }
 
 void free_entity(BaseEntity *e) {
-    SDL_free(e->idle_animation);
-    SDL_free(e->walk_animation);
+    free_animation(e->idle_animation);
+    free_animation(e->walk_animation);
     SDL_free(e);
 }

@@ -7,10 +7,10 @@
 typedef struct {
     BaseEntity *base;
     Animation *quick_attack_animation;
-} MainChar;
+} PlayerEntity;
 
-MainChar* create_char_entity(int x, int y);
-void char_attack(MainChar *c);
-void free_main_char(MainChar *c);
+PlayerEntity* create_char_entity(int x, int y);
+void char_attack(PlayerEntity *c);
+void free_main_char(PlayerEntity *c);
 
 #endif // CHAR_ENTITY_H

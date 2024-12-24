@@ -4,10 +4,8 @@
 NPC create_npc(int x, int y, const int CONV_IDX, Conversations *conversations) {
   NPC npc;
 
-  Animation *idle_animation =
-      create_animation(6, "npc_idle", 1, AnimationDelayIdle, 0, 0);
-  Animation *walk_animation =
-      create_animation(6, "npc_walk", 1, AnimationDelayWalk, 0, 0);
+  Animation *idle_animation = create_animation("npc_idle");
+  Animation *walk_animation = create_animation("npc_walk");
 
   BaseEntity *b = init_base_entity(x, y, idle_animation, walk_animation);
 

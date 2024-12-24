@@ -2,8 +2,7 @@
 #include <SDL3/SDL_surface.h>
 #define SDL_MAIN_USE_CALLBACKS 1
 #include "assets.h"
-#include "base_entity.h"
-#include "char_entity.h"
+#include "player_entity.h"
 #include "conversation_list.h"
 #include "npc.h"
 #include "ui.h"
@@ -13,7 +12,7 @@
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
-static MainChar *main_char = NULL;
+static PlayerEntity *main_char = NULL;
 static NPCArray npc_array = {NULL, 0};
 static Conversations *conversations = NULL;
 static SDL_Texture *ground = NULL;
