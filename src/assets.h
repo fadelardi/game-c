@@ -2,7 +2,7 @@
 #define ASSETS_H
 
 #include <SDL3/SDL.h>
-#define NUM_ASSETS 7
+#define NUM_ASSETS 8
 
 typedef struct {
   SDL_Texture *texture;

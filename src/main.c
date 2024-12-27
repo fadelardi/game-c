@@ -1,10 +1,6 @@
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_surface.h>
 #define SDL_MAIN_USE_CALLBACKS 1
 #include "assets.h"
-#include "player_entity.h"
 #include "conversation_list.h"
-#include "npc.h"
 #include "ui.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -12,10 +8,9 @@
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
-static PlayerEntity *main_char = NULL;
+static PlayerEntity *player_entity = NULL;
 static NPCArray npc_array = {NULL, 0};
 static Conversations *conversations = NULL;
-static SDL_Texture *ground = NULL;
 static int npc_contact_idx = -1;
 static enum GameStates { GAMEPLAY, DIALOGUE } game_state = GAMEPLAY;
 
@@ -37,14 +32,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
   init_assets(renderer);
   init_ui(renderer);
   load_conversations(&conversations);
-  main_char = create_char_entity(0, 0);
+  player_entity = create_char_entity(0, 0);
 
   NPC npc = create_npc(50, 50, 0, conversations);
   add_npc(&npc_array, npc);
-
-  SDL_Surface *ground_img = IMG_Load("images/ground.png");
-  ground = SDL_CreateTextureFromSurface(renderer, ground_img);
-  SDL_DestroySurface(ground_img);
 
   return SDL_APP_CONTINUE;
 }
@@ -52,19 +43,19 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
 void handle_gameplay_keys(SDL_Scancode code) {
   switch (code) {
   case SDL_SCANCODE_A:
-    move_entity(main_char->base, D_LEFT);
+    move_entity(player_entity->base, D_LEFT);
     break;
   case SDL_SCANCODE_D:
-    move_entity(main_char->base, D_RIGHT);
+    move_entity(player_entity->base, D_RIGHT);
     break;
   case SDL_SCANCODE_W:
-    move_entity(main_char->base, D_UP);
+    move_entity(player_entity->base, D_UP);
     break;
   case SDL_SCANCODE_S:
-    move_entity(main_char->base, D_DOWN);
+    move_entity(player_entity->base, D_DOWN);
     break;
   case SDL_SCANCODE_Q:
-    char_attack(main_char);
+    char_attack(player_entity);
     break;
   case SDL_SCANCODE_E:
     if (npc_contact_idx > -1) {
@@ -118,58 +109,22 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
     }
   } else if (event->type == SDL_EVENT_KEY_UP) {
     if (game_state == GAMEPLAY) {
-      if (main_char->base->current_animation->key_down_activation) {
-        reset_animation(main_char->base);
+      if (player_entity->base->current_animation->key_down_activation) {
+        reset_animation(player_entity->base);
       }
     }
   }
   return SDL_APP_CONTINUE;
 }
 
-void render_player_char(SDL_Renderer *renderer) {
-  update_entity(main_char->base);
-  render_entity(main_char->base, renderer);
-}
-
-void render_npcs(SDL_Renderer *renderer) {
-  int has_npc_contact = 0;
-
-  for (int i = 0; i < npc_array.count; i++) {
-    update_entity(&npc_array.npcs[i].base);
-    render_entity(&npc_array.npcs[i].base, renderer);
-
-    if (npc_contact_idx != -1 || !has_npc_contact) {
-      const bool is_npc_hit = is_hitting_entity(main_char, &npc_array.npcs[i].base);
-      if ((game_state == DIALOGUE && check_collision(main_char->base, &npc_array.npcs[i].base)) || (game_state == GAMEPLAY && is_npc_hit)) {
-        npc_contact_idx = i;
-        has_npc_contact = 1;
-        if (is_npc_hit) {
-          npc_array.npcs[i].base.current_animation = npc_array.npcs[i].base.dying_animation;
-        }
-        break;
-      } else {
-        npc_contact_idx = -1;
-      }
-    }
-  }
-}
-
-void render_ui(SDL_Renderer *renderer, int npc_contact_idx) {
-  if (npc_contact_idx > -1) {
-    if (game_state == DIALOGUE) {
-      render_dialogue(npc_array.npcs[npc_contact_idx].dialogue);
-    }
-  }
-}
-
 SDL_AppResult SDL_AppIterate(void *appstate) {
   SDL_SetRenderDrawColor(renderer, 0xBB, 0xB1, 0xCC, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
-  SDL_RenderTexture(renderer, ground, NULL, NULL);
 
-  render_npcs(renderer);
-  render_player_char(renderer);
-  render_ui(renderer, npc_contact_idx);
+  render_map(renderer, WINDOW_HEIGHT);
+  render_npcs(renderer, npc_array, player_entity, &npc_contact_idx, game_state == DIALOGUE);
+  render_player_char(renderer, player_entity);
+  render_ui(renderer, npc_contact_idx, npc_array, game_state == DIALOGUE);
 
   SDL_RenderPresent(renderer);
 
@@ -177,7 +132,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-  free_main_char(main_char);
+  free_player_entity(player_entity);
   free_npcs(&npc_array);
   free_assets();
   free_ui();

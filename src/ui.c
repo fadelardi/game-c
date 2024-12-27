@@ -1,4 +1,5 @@
-#include "dialogue.h"
+#include "ui.h"
+#include "assets.h"
 #include <SDL3_ttf/SDL_ttf.h>
 
 static TTF_TextEngine *engine = NULL;
@@ -121,4 +122,49 @@ void free_ui() {
   TTF_CloseFont(font);
   TTF_Quit();
   SDL_DestroyTexture(text_texture);
+}
+
+void render_player_char(SDL_Renderer *renderer, PlayerEntity *player_entity) {
+  update_entity(player_entity->base);
+  render_entity(player_entity->base, renderer);
+}
+
+void render_npcs(SDL_Renderer *renderer, NPCArray npc_array, PlayerEntity *player_entity, int *npc_contact_idx, bool is_dialogue) {
+  int has_npc_contact = 0;
+
+  for (int i = 0; i < npc_array.count; i++) {
+    update_entity(&npc_array.npcs[i].base);
+    render_entity(&npc_array.npcs[i].base, renderer);
+
+    if (*npc_contact_idx != -1 || !has_npc_contact) {
+      const bool is_npc_hit = is_hitting_entity(player_entity, &npc_array.npcs[i].base);
+      if ((is_dialogue && check_collision(player_entity->base, &npc_array.npcs[i].base)) || (!is_dialogue && is_npc_hit)) {
+        *npc_contact_idx = i;
+        has_npc_contact = 1;
+        if (is_npc_hit) {
+          npc_array.npcs[i].base.current_animation = npc_array.npcs[i].base.dying_animation;
+        }
+        break;
+      } else {
+        *npc_contact_idx = -1;
+      }
+    }
+  }
+}
+
+void render_ui(SDL_Renderer *renderer, int npc_contact_idx, NPCArray npc_array, bool is_dialogue) {
+  if (npc_contact_idx > -1) {
+    if (is_dialogue) {
+      render_dialogue(npc_array.npcs[npc_contact_idx].dialogue);
+    }
+  }
+}
+
+void render_map(SDL_Renderer *renderer, const int WINDOW_HEIGHT) {
+  const int GROUND_TOP_Y = 200;
+  const int GROUND_BOTTOM_Y = 150; 
+
+  SDL_FRect dest = {0, GROUND_TOP_Y, 1000, WINDOW_HEIGHT - GROUND_BOTTOM_Y - GROUND_TOP_Y};
+  SDL_Texture *ground = get_asset_by_tag("ground");
+  SDL_RenderTexture(renderer, ground, NULL, &dest);
 }

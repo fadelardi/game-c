@@ -50,7 +50,7 @@ bool is_hitting_entity(PlayerEntity *c, BaseEntity *e) {
   return false;
 }
 
-void free_main_char(PlayerEntity *c) {
+void free_player_entity(PlayerEntity *c) {
   free_entity(c->base);
   free_animation(c->quick_attack_animation);
   SDL_free(c);

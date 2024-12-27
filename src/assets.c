@@ -9,7 +9,8 @@ Asset assets[NUM_ASSETS] = {{NULL, "idle.png", "witch_idle"},
                             {NULL, "witch_death.png", "witch_death"},
                             {NULL, "npc_idle.png", "npc_idle"},
                             {NULL, "npc_walk.png", "npc_walk"},
-                            {NULL, "npc_death.png", "npc_death"}};
+                            {NULL, "npc_death.png", "npc_death"},
+                            {NULL, "ground.png", "ground"}};
 
 SDL_Texture *load_sprite(SDL_Renderer *renderer, const char *sprite_name) {
   SDL_Texture *texture = NULL;
