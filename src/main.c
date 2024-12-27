@@ -126,33 +126,50 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppIterate(void *appstate) {
-  SDL_SetRenderDrawColor(renderer, 0xBB, 0xB1, 0xCC, SDL_ALPHA_OPAQUE);
-  SDL_RenderClear(renderer);
-  SDL_RenderTexture(renderer, ground, NULL, NULL);
+void render_player_char(SDL_Renderer *renderer) {
+  update_entity(main_char->base);
+  render_entity(main_char->base, renderer);
+}
 
+void render_npcs(SDL_Renderer *renderer) {
   int has_npc_contact = 0;
+
   for (int i = 0; i < npc_array.count; i++) {
     update_entity(&npc_array.npcs[i].base);
     render_entity(&npc_array.npcs[i].base, renderer);
 
     if (npc_contact_idx != -1 || !has_npc_contact) {
-      if (check_collision(main_char->base, &npc_array.npcs[i].base)) {
+      const bool is_npc_hit = is_hitting_entity(main_char, &npc_array.npcs[i].base);
+      if ((game_state == DIALOGUE && check_collision(main_char->base, &npc_array.npcs[i].base)) || (game_state == GAMEPLAY && is_npc_hit)) {
         npc_contact_idx = i;
         has_npc_contact = 1;
+        if (is_npc_hit) {
+          npc_array.npcs[i].base.current_animation = npc_array.npcs[i].base.dying_animation;
+        }
         break;
       } else {
         npc_contact_idx = -1;
       }
     }
   }
+}
 
-  update_entity(main_char->base);
-  render_entity(main_char->base, renderer);
-
-  if (game_state == DIALOGUE && npc_contact_idx > -1) {
-    render_dialogue(npc_array.npcs[npc_contact_idx].dialogue);
+void render_ui(SDL_Renderer *renderer, int npc_contact_idx) {
+  if (npc_contact_idx > -1) {
+    if (game_state == DIALOGUE) {
+      render_dialogue(npc_array.npcs[npc_contact_idx].dialogue);
+    }
   }
+}
+
+SDL_AppResult SDL_AppIterate(void *appstate) {
+  SDL_SetRenderDrawColor(renderer, 0xBB, 0xB1, 0xCC, SDL_ALPHA_OPAQUE);
+  SDL_RenderClear(renderer);
+  SDL_RenderTexture(renderer, ground, NULL, NULL);
+
+  render_npcs(renderer);
+  render_player_char(renderer);
+  render_ui(renderer, npc_contact_idx);
 
   SDL_RenderPresent(renderer);
 

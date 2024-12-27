@@ -17,6 +17,7 @@ typedef struct {
     int width;
     int height;
     SDL_FRect *hitbox;
+    int frame_on_hit;
 } AnimationConf;
 
 typedef struct {
@@ -26,15 +27,16 @@ typedef struct {
     int height;
     int key_down_activation;
     int frame_update_delay;
-    int hitbox_x;
-    int hitbox_y;
+    int frame_on_hit;
+    int init_hitbox_x;
+    int init_hitbox_y;
     SDL_Texture *texture;
     SDL_FRect sprite_rect;
     SDL_FRect *hitbox;
 } Animation;
 
 Animation *create_animation(const char* asset_tag);
-int update_animation(Animation *a);
+bool update_animation(Animation *a);
 void free_animation(Animation *a);
 
 #endif

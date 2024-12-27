@@ -5,7 +5,7 @@ static const int MOVE_SPEED = 5;
 static const int X_OFFSET = 48 * 2;
 static const int Y_OFFSET = DEFAULT_CHAR_SIZE;
 
-BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation *walk_animation) {
+BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation *walk_animation, Animation *dying_animation) {
     BaseEntity *e = (BaseEntity*) SDL_malloc(sizeof(BaseEntity));
 
     if (e == NULL) {
@@ -22,15 +22,17 @@ BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation 
     e->current_animation = idle_animation;
     e->idle_animation = idle_animation;
     e->walk_animation = walk_animation;
+    e->dying_animation = dying_animation;
     SDL_FRect visual_rect = { x, y, DEFAULT_CHAR_SIZE * 2, DEFAULT_CHAR_SIZE * 2 };
     SDL_FRect hitbox = { x + X_OFFSET, y + Y_OFFSET, DEFAULT_CHAR_SIZE / 2, DEFAULT_CHAR_SIZE };
     e->visual_rect = visual_rect;
     e->hitbox = hitbox;
+    e->stats = init_stats();
 
     return e;
 }
 
-void move_entity(BaseEntity *e, MOVEMENT_DIRECTION dir) {
+void move_entity(BaseEntity *e, MovementDirection dir) {
     e->current_animation = e->walk_animation;
 
     switch(dir) {
@@ -61,6 +63,10 @@ bool check_collision(BaseEntity *e1, BaseEntity *e2) {
     return SDL_HasRectIntersectionFloat(&e1->hitbox, &e2->hitbox);
 }
 
+bool check_hitbox_collision(SDL_FRect *hitbox, BaseEntity *e) {
+    return SDL_HasRectIntersectionFloat(hitbox, &e->hitbox);
+}
+
 void render_hitboxes(BaseEntity *e, SDL_Renderer *renderer) {
     if (e->current_animation->hitbox != NULL && e->current_animation->current_frame > 0) {
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xBB, SDL_ALPHA_OPAQUE);
@@ -81,16 +87,21 @@ void render_entity(BaseEntity *e, SDL_Renderer *renderer) {
 }
 
 void update_entity(BaseEntity *e) {
-    e->visual_rect.x = e->x;
-    e->visual_rect.y = e->y;
-    e->anim_delay_counter++;
+    if (e->stats.hp > -1) {
+        e->visual_rect.x = e->x;
+        e->visual_rect.y = e->y;
+        e->anim_delay_counter++;
 
-    if (e->anim_delay_counter >= e->current_animation->frame_update_delay) {
-        int stop_animation = update_animation(e->current_animation);
-        if (stop_animation) {
-            reset_animation(e);
+        if (e->anim_delay_counter >= e->current_animation->frame_update_delay) {
+            bool stop_animation = update_animation(e->current_animation);
+            if (stop_animation) {
+                reset_animation(e);
+            }
+            e->anim_delay_counter = 0;
+            if (e->current_animation == e->dying_animation && e->current_animation->current_frame == e->current_animation->frame_count - 1) {
+                e->stats.hp = -1;
+            }
         }
-        e->anim_delay_counter = 0;
     }
 }
 

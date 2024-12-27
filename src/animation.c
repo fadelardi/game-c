@@ -6,8 +6,10 @@ static const char* anim_asset_tag[] = {
     "witch_idle",
     "witch_walk",
     "witch_attack_1",
+    "witch_death",
     "npc_idle",
     "npc_walk",
+    "npc_death",
 };
 
 static SDL_FRect witch_attack_1_hitbox = { 60, 30, 50, 50 };
@@ -15,9 +17,11 @@ static SDL_FRect witch_attack_1_hitbox = { 60, 30, 50, 50 };
 static AnimationConf anim_conf[] = {
     { 6, 1, AnimationDelayIdle, 0, 0, NULL },
     { 6, 1, AnimationDelayWalk, 0, 0, NULL },
-    { 5, 0, AnimationDelayAttack, 0, 0, &witch_attack_1_hitbox },
+    { 5, 0, AnimationDelayAttack, 0, 0, &witch_attack_1_hitbox, 3 },
+    { 4, 1, AnimationDelayWalk, 0, 0, NULL },
     { 6, 1, AnimationDelayIdle, 0, 0, NULL },
-    { 6,1, AnimationDelayWalk, 0, 0, NULL }
+    { 6,1, AnimationDelayIdle, 0, 0, NULL },
+    { 6, 1, AnimationDelayWalk, 0, 0, NULL },
 };
 
 int get_conf_index(const char* asset_tag) {
@@ -69,20 +73,22 @@ Animation *create_animation(const char* asset_tag) {
 
     a->sprite_rect = sprite_rect;
     a->hitbox = NULL;
-    a->hitbox_x = 0;
-    a->hitbox_y = 0;
+    a->init_hitbox_x = 0;
+    a->init_hitbox_y = 0;
+    a->frame_on_hit = -1;
     
     if (conf.hitbox != NULL) {
         a->hitbox = (SDL_FRect*)SDL_malloc(sizeof(SDL_FRect));
         *a->hitbox = *conf.hitbox;
-        a->hitbox_x = a->hitbox->x;
-        a->hitbox_y = a->hitbox->y;
+        a->init_hitbox_x = a->hitbox->x;
+        a->init_hitbox_y = a->hitbox->y;
+        a->frame_on_hit = conf.frame_on_hit;
     }
 
     return a;
 }
 
-int update_animation(Animation *a) {
+bool update_animation(Animation *a) {
     a->current_frame++;
 
     if (a->current_frame > a->frame_count - 1) {
@@ -92,8 +98,8 @@ int update_animation(Animation *a) {
     a->sprite_rect.x = (a->width * a->current_frame);
 
     if (a->hitbox != NULL && a->current_frame == 0) {
-        a->hitbox->x = a->hitbox_x;
-        a->hitbox->y = a->hitbox_y;
+        a->hitbox->x = a->init_hitbox_x;
+        a->hitbox->y = a->init_hitbox_y;
     }
 
     return !a->key_down_activation && a->current_frame == 0;

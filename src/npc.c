@@ -6,8 +6,9 @@ NPC create_npc(int x, int y, const int CONV_IDX, Conversations *conversations) {
 
   Animation *idle_animation = create_animation("npc_idle");
   Animation *walk_animation = create_animation("npc_walk");
+  Animation *dying_animation = create_animation("npc_death");
 
-  BaseEntity *b = init_base_entity(x, y, idle_animation, walk_animation);
+  BaseEntity *b = init_base_entity(x, y, idle_animation, walk_animation, dying_animation);
 
   if (b == NULL) {
     return (NPC){0};

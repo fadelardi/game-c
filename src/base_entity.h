@@ -2,6 +2,8 @@
 #define BASE_ENTITY_H
 
 #include "animation.h"
+#include "stats.h"
+#include <stdbool.h>
 
 #define DEFAULT_CHAR_SIZE 128
 
@@ -13,9 +15,11 @@ typedef struct {
     int move_speed;
     SDL_FRect visual_rect;
     SDL_FRect hitbox;
+    Stats stats;
     Animation *current_animation;
     Animation *idle_animation;
     Animation *walk_animation;
+    Animation *dying_animation;
 } BaseEntity;
 
 typedef enum {
@@ -23,13 +27,14 @@ typedef enum {
     D_RIGHT,
     D_UP,
     D_DOWN
-} MOVEMENT_DIRECTION;
+} MovementDirection;
 
-BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation *walk_animation);
+BaseEntity *init_base_entity(int x, int y, Animation *idle_animation, Animation *walk_animation, Animation *dying_animation);
 void render_entity(BaseEntity *e, SDL_Renderer *renderer);
 void update_entity(BaseEntity *e);
 bool check_collision(BaseEntity *e1, BaseEntity *e2);
-void move_entity(BaseEntity *e, MOVEMENT_DIRECTION dir);
+bool check_hitbox_collision(SDL_FRect *hitbox, BaseEntity *e);
+void move_entity(BaseEntity *e, MovementDirection dir);
 void free_entity(BaseEntity *e);
 void reset_animation(BaseEntity *e);
 
