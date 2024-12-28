@@ -2,6 +2,7 @@
 #include "assets.h"
 #include "conversation_list.h"
 #include "ui.h"
+#include "config.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
@@ -13,9 +14,6 @@ static NPCArray npc_array = {NULL, 0};
 static Conversations *conversations = NULL;
 static int npc_contact_idx = -1;
 static enum GameStates { GAMEPLAY, DIALOGUE } game_state = GAMEPLAY;
-
-#define WINDOW_WIDTH 1000
-#define WINDOW_HEIGHT 1000
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
   if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -121,7 +119,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   SDL_SetRenderDrawColor(renderer, 0xBB, 0xB1, 0xCC, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
-  render_map(renderer, WINDOW_HEIGHT);
+  render_map(renderer);
   render_npcs(renderer, npc_array, player_entity, &npc_contact_idx, game_state == DIALOGUE);
   render_player_char(renderer, player_entity);
   render_ui(renderer, npc_contact_idx, npc_array, game_state == DIALOGUE);

@@ -50,6 +50,11 @@ bool is_hitting_entity(PlayerEntity *c, BaseEntity *e) {
   return false;
 }
 
+void render_player_char(SDL_Renderer *renderer, PlayerEntity *player_entity) {
+  update_entity(player_entity->base);
+  render_entity(player_entity->base, renderer);
+}
+
 void free_player_entity(PlayerEntity *c) {
   free_entity(c->base);
   free_animation(c->quick_attack_animation);

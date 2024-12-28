@@ -12,6 +12,7 @@ typedef struct {
 PlayerEntity* create_char_entity(int x, int y);
 void char_attack(PlayerEntity *c);
 bool is_hitting_entity(PlayerEntity *c, BaseEntity *e);
+void render_player_char(SDL_Renderer *renderer, PlayerEntity *player_entity);
 void free_player_entity(PlayerEntity *c);
 
 #endif // CHAR_ENTITY_H
